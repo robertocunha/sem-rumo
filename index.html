@@ -297,73 +297,80 @@
   </footer>
   </div>
 
-  <script>
-    (function () {
-      const iframe = document.getElementById('iframe');
-      const placeholder = document.getElementById('placeholder');
-      const livePill = document.getElementById('livePill');
+<script>
+  (function () {
+    const iframe = document.getElementById('iframe');
+    const placeholder = document.getElementById('placeholder');
+    const livePill = document.getElementById('livePill');
 
-      const params = new URLSearchParams(location.search);
-      const yt = params.get('yt'); // ID do vídeo ao vivo do YouTube
-      const twitch = params.get('twitch'); // nome do canal da Twitch
+    const params = new URLSearchParams(location.search);
+    const yt = params.get('yt');      // ID de vídeo OU de playlist (YouTube)
+    const twitch = params.get('twitch'); // nome do canal (Twitch)
 
-      function setSrc(url) {
-        iframe.src = url;
-        iframe.addEventListener('load', () => {
-          placeholder.style.display = 'none';
-          livePill.style.opacity = 1;
-        }, { once: true });
-      }
+    function setSrc(url) {
+      iframe.src = url;
+      iframe.addEventListener('load', () => {
+        placeholder.style.display = 'none';
+        livePill.style.opacity = 1;
+      }, { once: true });
+    }
 
-      if (yt) {
-        setSrc(`https://www.youtube.com/embed/${yt}?autoplay=1&rel=0&modestbranding=1`);
-      } else if (twitch) {
-        // Twitch requer informar o domínio no parâmetro parent
-        const parent = location.hostname || 'localhost';
-        setSrc(`https://player.twitch.tv/?channel=${encodeURIComponent(twitch)}&parent=${encodeURIComponent(parent)}&muted=false&autoplay=true`);
+    if (yt) {
+      // Se começar com "PL", assumimos que é playlist do YouTube
+      if (yt.startsWith('PL')) {
+        setSrc(`https://www.youtube.com/embed/videoseries?list=${yt}&autoplay=1&loop=1&rel=0&modestbranding=1`);
       } else {
-        livePill.style.opacity = .5; // fora do ar
+        // Vídeo único com loop
+        setSrc(`https://www.youtube.com/embed/${yt}?autoplay=1&rel=0&modestbranding=1&loop=1&playlist=${yt}`);
       }
+    } else if (twitch) {
+      // Twitch requer informar o domínio no parâmetro parent
+      const parent = location.hostname || 'localhost';
+      setSrc(`https://player.twitch.tv/?channel=${encodeURIComponent(twitch)}&parent=${encodeURIComponent(parent)}&muted=false&autoplay=true`);
+    } else {
+      livePill.style.opacity = .5; // fora do ar
+    }
 
-      // ======= Compartilhamento =======
-      const shareData = {
-        title: 'Sem Rumo — ao vivo',
-        text: 'Cola no happening do Sem Rumo agora. Tá rolando!',
-        url: location.href
-      };
-      const byId = id => document.getElementById(id);
-      const btnShare = byId('btnShare');
-      const btnWhats = byId('btnWhats');
-      const btnX = byId('btnX');
-      const btnTelegram = byId('btnTelegram');
-      const btnCopy = byId('btnCopy');
+    // ======= Compartilhamento =======
+    const shareData = {
+      title: 'Sem Rumo — ao vivo',
+      text: 'Cola no happening do Sem Rumo agora. Tá rolando!',
+      url: location.href
+    };
+    const byId = id => document.getElementById(id);
+    const btnShare = byId('btnShare');
+    const btnWhats = byId('btnWhats');
+    const btnX = byId('btnX');
+    const btnTelegram = byId('btnTelegram');
+    const btnCopy = byId('btnCopy');
 
-      btnShare.addEventListener('click', async () => {
-        if (navigator.share) {
-          try { await navigator.share(shareData); } catch (e) { }
-        } else {
-          try {
-            await navigator.clipboard.writeText(location.href);
-            btnShare.textContent = 'Link copiado!';
-            setTimeout(() => btnShare.textContent = 'Compartilhar', 1400);
-          } catch (e) { alert('Copie o link manualmente: ' + location.href); }
-        }
-      });
-
-      const enc = encodeURIComponent;
-      const url = location.href;
-      btnWhats.href = `https://wa.me/?text=${enc(url)}`;
-      btnX.href = `https://twitter.com/intent/tweet?url=${enc(url)}&text=${enc('Sem Rumo — ao vivo')}`;
-      btnTelegram.href = `https://t.me/share/url?url=${enc(url)}&text=${enc('Sem Rumo — ao vivo')}`;
-      btnCopy.addEventListener('click', async () => {
+    btnShare.addEventListener('click', async () => {
+      if (navigator.share) {
+        try { await navigator.share(shareData); } catch (e) { }
+      } else {
         try {
-          await navigator.clipboard.writeText(url);
-          btnCopy.textContent = 'Copiado!';
-          setTimeout(() => btnCopy.textContent = 'Copiar link', 1200);
-        } catch (e) { alert('Copie o link: ' + url); }
-      });
-    })();
-  </script>
+          await navigator.clipboard.writeText(location.href);
+          btnShare.textContent = 'Link copiado!';
+          setTimeout(() => btnShare.textContent = 'Compartilhar', 1400);
+        } catch (e) { alert('Copie o link manualmente: ' + location.href); }
+      }
+    });
+
+    const enc = encodeURIComponent;
+    const url = location.href;
+    btnWhats.href = `https://wa.me/?text=${enc(url)}`;
+    btnX.href = `https://twitter.com/intent/tweet?url=${enc(url)}&text=${enc('Sem Rumo — ao vivo')}`;
+    btnTelegram.href = `https://t.me/share/url?url=${enc(url)}&text=${enc('Sem Rumo — ao vivo')}`;
+    btnCopy.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(url);
+        btnCopy.textContent = 'Copiado!';
+        setTimeout(() => btnCopy.textContent = 'Copiar link', 1200);
+      } catch (e) { alert('Copie o link: ' + url); }
+    });
+  })();
+</script>
+
 </body>
 
 </html>
